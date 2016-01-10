@@ -1,0 +1,81 @@
+---
+title: "ftse_analysis"
+author: "Danny Andersen"
+date: "10 January 2016"
+output: html_document
+---
+
+```{r, library, echo=F, message=F}
+
+if (!require(XML)) install.packages('XML')
+library(XML)
+if (!require(RCurl)) install.packages('RCurl')
+library(RCurl)
+if (!require(dplyr)) install.packages('dplyr')
+library(dplyr)
+```
+
+```{r, getstocks}
+#Pull down list of stocks to analyse from wikipedia
+#FTSE100 stocks
+ftse100 <- "https://en.wikipedia.org/wiki/FTSE_100_Index"
+xData <- getURL(ftse100)
+
+#Read web page and scrape table containing FTSE 100 constituents
+stockList<-readHTMLTable(xData)[2]$constituents
+#Create and empty array to hold returned data
+stats <- array(dim=c(nrow(stockList),6))
+
+#Process each stock in the list to draw historical graphs and calculate avg dividend
+for (i in 1:nrow(stockList)) {
+    #Process stock
+    s<-stockList[i,c("Ticker","Company")]
+    stats[i,] <- tryCatch(process_stock(as.character(s[[1]]),as.character(s[[2]])),
+                          error = function(e) {
+                              c(as.character(s[[1]]),as.character(s[[2]]),NA,NA,NA,NA)
+                          })
+}
+#Add the calculated dividend % 
+stockList$AvgDividend <- as.numeric(stats[,3])
+stockList$StdDevDividend <- as.numeric(stats[,4])
+stockList$AvgPrice <- as.numeric(stats[,5])
+stockList$StdDevPrice <- as.numeric(stats[,6])
+
+save(stockList,file="../data/stockList.RData")
+
+possibleStocks <- filter(stockList, AvgDividend >= 4) %>%
+    arrange(desc(AvgDividend))
+#Top 10 divi stocks
+head(possibleStocks, n=10)
+
+```
+
+```{r, graph}
+    if (avgDivi >= min_perc){
+        #Could be interesting - Plot results
+        png(filename=paste("../graphs/",name," Prices.png", sep=""), width=1300, height=800)
+        par(mfrow = c(1,2))
+        #plot(prices$Date,prices$Close,type="l", xlab="Year", ylab="Closing price (pence)", main=paste(stock, "Weekly Prices"))
+        #Plot prices
+        plot(prices$Date,prices$Close,type="l", xlab="Year", ylab="Closing price (pence)", 
+             ylim = c(min(prices$Close, yearlyDivs$divPrice),max(prices$Close, yearlyDivs$divPrice)),
+             main=paste(name, "Weekly Prices last 8 yrs"))
+        lines(yearlyDivs$date,yearlyDivs$divPrice, col="blue")
+        legend("topright",lty=1,legend=c("Weekly closing price", "Price for a 4% div"), col=c("black", "blue"))
+        abline(h=meanPrice)
+        grid()
+        #Plot dividend
+        plot(yearlyDivs$year,yearlyDivs$percent, type="l", 
+             xlab="Year", 
+             ylim=c(0, max(yearlyDivs$avgpercent,yearlyDivs$percent)+2),
+             ylab="Total Div as % of avg price", 
+             main = paste(name,"Dividend as a percentage of avg price"))
+        points(yearlyDivs$year,yearlyDivs$percent, pch=19, col="black")
+        lines(yearlyDivs$year,yearlyDivs$avgpercent, col="red")
+        abline(h = min_perc, col="black", lty=2)
+        abline(h = avgDivi, col="blue")
+        grid()
+        legend("topright",lty=1,legend=c("% of year price", "% of 8 yr avg", "Avg % divi"), col=c("black", "red", "blue"))
+        dev.off()
+    }
+```
