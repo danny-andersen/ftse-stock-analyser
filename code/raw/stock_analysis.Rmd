@@ -13,6 +13,7 @@ if (!require(RCurl)) install.packages('RCurl')
 library(RCurl)
 if (!require(dplyr)) install.packages('dplyr')
 library(dplyr)
+source("process_prices.R")
 ```
 
 ```{r, getstocks}
