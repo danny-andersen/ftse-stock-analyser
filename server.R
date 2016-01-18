@@ -10,6 +10,7 @@ if (!require(dplyr)) install.packages('dplyr')
 library(dplyr)
 if (!require(ggplot2)) install.packages('ggplot2')
 library(ggplot2)
+
 source("process_prices.R")
 
 ftse100 <- "https://en.wikipedia.org/wiki/FTSE_100_Index"
@@ -20,6 +21,7 @@ getftse100 <- function(force = FALSE) {
         xData <- getURL(ftse100)
         #Read web page and scrape table containing FTSE 100 constituents
         ftse100list<-readHTMLTable(xData)[2]$constituents
+        print(nrow(ftse100list))
     } 
     ftse100list
 }
@@ -43,7 +45,8 @@ refreshData <- function(numOfYears=8, force = FALSE, min_dividend) {
     stockList$Avg.Price <- round(as.numeric(stats[,5]),2)
     stockList$StdDev.Price <- round(as.numeric(stats[,6]),2)
     #Return stocks filtered by min divi
-    filter(stockList, Avg.Dividend >= min_dividend)
+    stockList
+    #filter(stockList, Avg.Dividend >= min_dividend)
 }
 
 plotStockDividends<- function(ticker, name, numOfYears = 8) {
@@ -51,7 +54,7 @@ plotStockDividends<- function(ticker, name, numOfYears = 8) {
     meanPrice <- round(mean(prices$Close,na.rm = TRUE),0)
     sdPrice <- sd(prices$Close,na.rm = TRUE)
     
-    yearlyDivs <- getYearlyDivs(ticker, name, numOfYears)
+    yearlyDivs <- getYearlyDivs(ticker, name, prices, numOfYears)
     avgDivi <- round(mean(yearlyDivs$percent,na.rm = T),2)
     sdDivi <- sd(yearlyDivs$percent, na.rm = T)
     #Plot dividend
@@ -73,7 +76,7 @@ plotStockPrices <- function(ticker, name, numOfYears = 8) {
     meanPrice <- round(mean(prices$Close,na.rm = TRUE),0)
     sdPrice <- sd(prices$Close,na.rm = TRUE)
     
-    yearlyDivs <- getYearlyDivs(ticker, name, numOfYears)
+    yearlyDivs <- getYearlyDivs(ticker, name, prices, numOfYears)
 
         #Plot prices
     cols<- c("Weekly_closing_price" = "black", "4%_Div_Price" = "red")
@@ -112,7 +115,7 @@ shinyServer(function(input, output) {
         i=0
         for( f in files) {
             i<-i+1
-            t[i]<-file.mtime(paste("data",file,sep="/"))
+            t[i]<-file.mtime(paste("data",f,sep="/"))
         }
         format(max(t,na.rm = T))
     })

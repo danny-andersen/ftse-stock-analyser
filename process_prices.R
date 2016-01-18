@@ -1,5 +1,5 @@
 
-getYearlyDivs <- function(ticker, name, numOfYears = 8) {
+getYearlyDivs <- function(ticker, name,  prices, numOfYears = 8) {
     divsFile <- paste("data/",ticker,"_divs.RData", sep="")
     if (file.exists(divsFile)) {
         load(divsFile)
@@ -21,10 +21,11 @@ getYearlyDivs <- function(ticker, name, numOfYears = 8) {
     }
     divs <- mutate(divs, close=closing(Date))
     #Summarise by year and avg price and percentage divi
+    meanPrice <- mean(prices$Close)
     yearlyDivs <- mutate(divs, year=as.numeric(as.character(Date, "%Y")))  %>%
         group_by(year) %>%
-        summarise(totalDiv = sum(Dividends), avgPrice=mean(close)) %>%
-        mutate(percent = 100*totalDiv/avgPrice, 
+        summarise(totalDiv = sum(Dividends), avgClosePrice=mean(close)) %>%
+        mutate(percent = 100*totalDiv/avgClosePrice, 
                avgpercent = 100*totalDiv/meanPrice,
                date = as.Date(as.character(year), "%Y"),
                divPrice = totalDiv/0.04)  #Div price is the price the share needs to be to give a 4% return
@@ -59,7 +60,6 @@ process_stock <- function(stock, name = stock, numOfYears = 8, force = FALSE) {
     keyStats_url="https://uk.finance.yahoo.com/q/ks?s=XXX.L"
     
     #Load and process price data  
-    pricesFile <- paste("data/",stock,"_prices.RData", sep="")
     if (force){
         prices <- tryCatch(read.csv(file=sub("XXX",stock,price_url),header=T),
                            error=function(e) { 
@@ -71,13 +71,12 @@ process_stock <- function(stock, name = stock, numOfYears = 8, force = FALSE) {
         save(prices,file=paste("data/",stock,"_prices.RData", sep=""))
     }
     
-    getPrices(stock, name, numOfYears)
+    prices <- getPrices(stock, name, numOfYears)
     meanPrice <- mean(prices$Close)
     sdPrice <- sd(prices$Close)
     
-    #Load and process dividend data
-    divsFile <- paste("data/",stock,"_divs.RData", sep="")
     if (force) {
+        #Load and process dividend data
         divs <- tryCatch(read.csv(file=sub("XXX",stock,div_url),header=T),
                          error=function(e) { 
                              print(paste(stock," dividends not found")); 
@@ -88,7 +87,7 @@ process_stock <- function(stock, name = stock, numOfYears = 8, force = FALSE) {
         save(divs,file=paste("data/",stock,"_divs.RData", sep=""))
     }
     #Analyse dividend data
-    yearlyDivs <- getYearlyDivs(stock, name, numOfYears)
+    yearlyDivs <- getYearlyDivs(stock, name, prices, numOfYears)
     avgDivi <- mean(yearlyDivs$percent)
     sdDivi <- sd(yearlyDivs$percent)
     
