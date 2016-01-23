@@ -21,7 +21,6 @@ getftse100 <- function(force = FALSE) {
         xData <- getURL(ftse100)
         #Read web page and scrape table containing FTSE 100 constituents
         ftse100list<-readHTMLTable(xData)[2]$constituents
-        print(nrow(ftse100list))
     } 
     ftse100list
 }
@@ -63,10 +62,10 @@ plotStockDividends<- function(ticker, name, numOfYears = 8) {
     gd <- gd + labs(x="Year", y="Total Div as % of avg price", title=paste(name,"Dividend as a percentage of avg price"))
     gd <- gd + ylim(c(0, max(yearlyDivs$avgpercent,yearlyDivs$percent,na.rm = TRUE)+2))
     gd <- gd + geom_line(aes(colour="Div_%_Yr_Price"))
-    gd <- gd + geom_point()
+    gd <- gd + geom_point(size=2)
     gd <- gd + geom_line(aes(x=year, y=avgpercent, colour="Div_%_8yr_price"))
     gd <- gd + geom_hline(yintercept = avgDivi, linetype=2, colour="blue")
-    gd <- gd + geom_text(aes(min(year)+1,avgDivi,label=paste("Avg Div",avgDivi)),vjust=-1,colour="blue")
+    gd <- gd + geom_text(aes(min(year)+1,avgDivi,label=paste("Avg Div",avgDivi, '%')),vjust=-1,colour="blue")
     gd <- gd + scale_colour_manual(name="", values=cols)
     gd
 }    
@@ -82,10 +81,10 @@ plotStockPrices <- function(ticker, name, numOfYears = 8) {
     cols<- c("Weekly_closing_price" = "black", "4%_Div_Price" = "red")
     g<-ggplot(prices, aes(x=Date, y=Close))
     g <- g + geom_line(aes(colour="Weekly_closing_price"))
-    g <- g + labs(x="Year", y="Closing price (pence)", title = paste(name, "Weekly Prices last 8 yrs"))
+    g <- g + labs(x="Year", y="Closing price (pence)", title = paste(name, "Weekly Prices last",numOfYears,"yrs"))
     g <- g + ylim(c(min(prices$Close, yearlyDivs$divPrice),max(prices$Close, yearlyDivs$divPrice)))
     g <- g + geom_hline(yintercept = meanPrice, linetype=2, colour="blue")
-    g <- g + geom_text(aes(min(prices$Date)+365,meanPrice,label=paste("Avg Price",meanPrice),vjust=-1))
+    g <- g + geom_text(aes(min(prices$Date)+365,meanPrice,label=paste("Avg Price",meanPrice,"p"),vjust=-1))
     g <- g + geom_line(data=yearlyDivs, aes(x=date, y=divPrice,colour="4%_Div_Price" ))
     g <- g + scale_colour_manual(name="", values=cols)
     g
