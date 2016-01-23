@@ -44,8 +44,8 @@ refreshData <- function(numOfYears=8, force = FALSE, min_dividend) {
     stockList$Avg.Price <- round(as.numeric(stats[,5]),2)
     stockList$StdDev.Price <- round(as.numeric(stats[,6]),2)
     #Return stocks filtered by min divi
-    stockList
-    #filter(stockList, Avg.Dividend >= min_dividend)
+    #stockList
+    filter(stockList, Avg.Dividend >= min_dividend)
 }
 
 plotStockDividends<- function(ticker, name, numOfYears = 8) {
