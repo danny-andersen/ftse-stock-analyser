@@ -28,6 +28,10 @@ shinyUI(fluidPage(
             fluidRow(column(12,
                             actionButton("refreshAllData", label = "Refresh All Stock data", 
                                          title="WARNING: This will refresh ALL pricing data and will take a long time to complete. Please be patient"))
+            ),
+            br(),
+            fluidRow(column(12,
+                            a("Help",href="http://rpubs.com/danny-andersen/ftse100-shiny-app-intro"))
             )
         ),
         
