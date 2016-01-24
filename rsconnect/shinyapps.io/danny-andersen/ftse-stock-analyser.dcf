@@ -1,8 +1,8 @@
 name: ftse-stock-analyser
 account: danny-andersen
 server: shinyapps.io
-bundleId: 356011
+bundleId: 356971
 url: https://danny-andersen.shinyapps.io/ftse-stock-analyser/
-when: 1453566095.79268
+when: 1453650812.12999
 asMultiple: FALSE
 asStatic: FALSE
